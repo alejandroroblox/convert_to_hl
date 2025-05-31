@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Conversor VSQX/SVP/UST/USTX/DV a HL (JSON)</title>
+  <style>
+    body { background: #fffde7; font-family: 'Comic Sans MS', cursive, sans-serif; color: #ff69b4; padding: 20px;}
+    h1 { color: #ff69b4; }
+    .box { background: #ffe4ec; border-radius: 16px; padding: 24px; max-width: 600px; margin: 0 auto; }
+    input, button { border-radius: 8px; padding: 8px; font-size: 16px; }
+    #output { white-space: pre; background: #fff; color: #a7a7a7; border-radius: 8px; padding: 10px; margin-top: 16px;}
+    .kawaii { font-size: 32px; }
+  </style>
+</head>
+<body>
+  <div class="box">
+    <div class="kawaii">🎀 Conversor a HL 🎀</div>
+    <h1>VSQX, SVP, UST, USTX, DV &rarr; HL (JSON)</h1>
+    <input type="file" id="fileInput" accept=".vsqx,.svp,.ust,.ustx,.xml,.dv,.json" /><br><br>
+    <button onclick="convert()">Convertir a HL</button>
+    <a id="downloadLink" style="display:none; margin-left:20px;">Descargar HL</a>
+    <div id="output"></div>
+  </div>
+
+  <script>
+    function parseUST(text) {
+      // Básico UST/USTX parser (solo notas, sin control avanzado)
+      const lines = text.split(/\r?\n/);
+      let notes = [], n = null;
+      for (const line of lines) {
+        if (line.startsWith("[#") && !line.startsWith("[#SETTING")) {
+          if (n) notes.push(n);
+          n = { pitch: 60, start: 0, length: 480, lyric: "" };
+        } else if (n) {
+          if (line.startsWith("Length=")) n.length = parseInt(line.split("=")[1]);
+          if (line.startsWith("NoteNum=")) n.pitch = parseInt(line.split("=")[1]);
+          if (line.startsWith("Lyric=")) n.lyric = line.split("=")[1];
+        }
+      }
+      if (n) notes.push(n);
+      // Calcular start
+      let t = 0;
+      for (let note of notes) {
+        note.start = t;
+        t += note.length;
+      }
+      return notes.filter(x => x.lyric && x.length > 0);
+    }
+
+    function parseUSTX(json) {
+      // USTX is JSON format
+      let notes = [];
+      if(!json.tracks) return notes;
+      for(const track of json.tracks) {
+        if(!track.notes) continue;
+        for(const n of track.notes) {
+          notes.push({
+            pitch: n.pitch || 60,
+            start: n.ticks || 0,
+            length: n.duration || 480,
+            lyric: n.lyric || ""
+          });
+        }
+      }
+      return notes;
+    }
+
+    function parseVSQX(xml) {
+      // VSQX y SVP son XML; parseamos notas básicas
+      let parser = new DOMParser();
+      let doc = parser.parseFromString(xml, "text/xml");
+      let notes = [];
+      let noteElems = doc.querySelectorAll('note');
+      noteElems.forEach(ne => {
+        let lyric = ne.querySelector('lyric') ? ne.querySelector('lyric').textContent : "";
+        let pitch = parseInt(ne.querySelector('noteNum') ? ne.querySelector('noteNum').textContent : "60");
+        let start = parseInt(ne.querySelector('posTick') ? ne.querySelector('posTick').textContent : "0");
+        let length = parseInt(ne.querySelector('durTick') ? ne.querySelector('durTick').textContent : "480");
+        notes.push({ pitch, start, length, lyric });
+      });
+      return notes;
+    }
+
+    function parseSVP(xml) {
+      // SVP: XML, similar a VSQX pero diferente estructura
+      let parser = new DOMParser();
+      let doc = parser.parseFromString(xml, "text/xml");
+      let notes = [];
+      let noteElems = doc.querySelectorAll('Note');
+      noteElems.forEach(ne => {
+        let lyric = ne.querySelector('Lyric') ? ne.querySelector('Lyric').textContent : "";
+        let pitch = parseInt(ne.querySelector('Pitch') ? ne.querySelector('Pitch').textContent : "60");
+        let start = parseInt(ne.querySelector('StartPos') ? ne.querySelector('StartPos').textContent : "0");
+        let length = parseInt(ne.querySelector('Duration') ? ne.querySelector('Duration').textContent : "480");
+        notes.push({ pitch, start, length, lyric });
+      });
+      return notes;
+    }
+
+    function parseDV(json) {
+      // DV es formato Dreamtonics, JSON con SongNote
+      let notes = [];
+      if (json.mainTrack && json.mainTrack.notes) {
+        for(const n of json.mainTrack.notes) {
+          notes.push({
+            pitch: n.keyNumber || 60,
+            start: n.position || 0,
+            length: n.length || 480,
+            lyric: n.lyric || ""
+          });
+        }
+      }
+      return notes;
+    }
+
+    function convert() {
+      let input = document.getElementById("fileInput");
+      let file = input.files[0];
+      if (!file) {
+        alert("Selecciona un archivo primero!");
+        return;
+      }
+      let reader = new FileReader();
+      reader.onload = function(e) {
+        let ext = file.name.split('.').pop().toLowerCase();
+        let result = [];
+        if (ext === "ust") {
+          result = parseUST(e.target.result);
+        } else if (ext === "ustx") {
+          try {
+            let json = JSON.parse(e.target.result);
+            result = parseUSTX(json);
+          } catch (e) { alert("USTX no válido"); }
+        } else if (ext === "vsqx") {
+          result = parseVSQX(e.target.result);
+        } else if (ext === "svp" || ext === "xml") {
+          result = parseSVP(e.target.result);
+        } else if (ext === "dv") {
+          try {
+            let json = JSON.parse(e.target.result);
+            result = parseDV(json);
+          } catch (e) { alert("DV no válido"); }
+        } else if (ext === "hl" || ext === "json") {
+          try {
+            let json = JSON.parse(e.target.result);
+            if (json.notes) result = json.notes;
+            else result = [];
+          } catch (e) { alert("HL no válido"); }
+        } else {
+          alert("Formato no soportado");
+          return;
+        }
+        let hlObj = { notes: result };
+        let hlStr = JSON.stringify(hlObj, null, 2);
+        document.getElementById("output").textContent = hlStr;
+        let blob = new Blob([hlStr], {type: "application/json"});
+        let link = document.getElementById("downloadLink");
+        link.href = URL.createObjectURL(blob);
+        link.download = file.name.replace(/\.\w+$/, "") + ".hl";
+        link.textContent = "Descargar archivo .hl";
+        link.style.display = "inline";
+      };
+      if (file.name.endsWith(".ust") || file.name.endsWith(".txt")) {
+        reader.readAsText(file, "shift-jis"); // UST puede venir en shift-jis
+      } else {
+        reader.readAsText(file, "utf-8");
+      }
+    }
+  </script>
+</body>
+</html>
