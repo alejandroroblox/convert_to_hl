@@ -3,493 +3,260 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Convertidor a HL (Simulado)</title>
+    <title>HiroshiLOID Music Converter (Navegador)</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            background-color: #f3f4f6; /* Fondo gris claro */
         }
-        /* Animación para el icono de carga */
-        @keyframes pulse {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(1.05);
-                opacity: 0.8;
-            }
+        /* Estilos para el scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
         }
-        .animate-pulse-custom {
-            animation: pulse 1.5s infinite ease-in-out;
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* Oculta el input de archivo real y usa el botón personalizado */
+        #file-input {
+            display: none;
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col p-4 sm:p-6">
+<body class="min-h-screen bg-gray-100 font-sans text-gray-900 antialiased p-4 flex items-center justify-center">
+    <div class="max-w-3xl w-full bg-white rounded-xl shadow-2xl overflow-hidden border border-gray-200 p-6 space-y-6">
+        <header class="bg-gradient-to-r from-teal-600 to-emerald-700 p-4 rounded-lg shadow-md text-center">
+            <h1 class="text-3xl font-bold text-white mb-2">Convertidor de Música a HL</h1>
+            <p class="text-teal-100 text-lg">Carga tus archivos de audio y crea proyectos HiroshiLOID simulados.</p>
+            <p class="text-xs text-teal-200 mt-2">
+                (Nota: Esta versión funciona directamente en el navegador. La conversión de audio es una simulación.)
+            </p>
+        </header>
 
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="fixed inset-0 bg-gray-900 bg-opacity-75 flex flex-col items-center justify-center z-50 hidden">
-        <!-- Custom loading icon -->
-        <img
-            src="https://raw.githubusercontent.com/google-gemini/gemini-canvas-samples/main/images/Gemini_Generated_Image_dovm1hdovm1hdovm.jpg"
-            onerror="this.src='https://placehold.co/200x200/6B46C1/FFFFFF?text=CARGANDO...'"
-            alt="Icono de Cargando"
-            class="w-48 h-auto animate-pulse-custom rounded-lg shadow-xl"
-        >
-        <p class="mt-4 text-white text-xl font-semibold">Procesando conversión...</p>
-    </div>
-
-    <!-- Custom Modal -->
-    <div id="custom-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full border-2 border-purple-300">
-            <h3 id="modal-title" class="text-xl font-bold mb-4 text-purple-600"></h3>
-            <div id="modal-message" class="text-gray-700 mb-6"></div>
-            <div class="flex justify-end space-x-3">
-                <button id="modal-close-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition duration-200">
-                    Cerrar
-                </button>
-                <button id="modal-confirm-button" class="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition duration-200 hidden">
-                    Confirmar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <header class="bg-gradient-to-r from-purple-500 to-indigo-600 p-4 shadow-lg rounded-lg mb-6">
-        <h1 class="text-white text-3xl font-bold text-center">🎶 Convertidor a HL (Simulado) 🎶</h1>
-        <p class="text-white text-sm text-center mt-2 opacity-90">
-            Convierte (simuladamente) archivos de audio y secuencias musicales a formato HL.
-            <span class="font-bold text-yellow-200">¡Importante: Esta es una simulación con IA, no una conversión real y precisa!</span>
-        </p>
-    </header>
-
-    <main class="flex-1 container mx-auto bg-white p-6 rounded-lg shadow-md border border-gray-200">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-
-            <!-- WAV to HL -->
-            <div class="bg-blue-50 p-5 rounded-lg shadow-sm border border-blue-200">
-                <h3 class="text-xl font-semibold text-blue-800 mb-3">Audio (.wav) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo WAV. Se transcribirá a texto y luego la IA generará notas HL a partir de la transcripción.
-                    <span class="font-bold text-red-600">No conservará el tono original.</span> (Sin límite de tamaño)
-                </p>
-                <input type="file" id="wav-upload" accept="audio/wav" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-100 file:text-blue-700 hover:file:bg-blue-200" />
-                <p id="wav-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-wav" class="mt-4 w-full px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200 shadow-md" disabled>
-                    Convertir WAV a HL
-                </button>
-                <p id="wav-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- VSQX to HL -->
-            <div class="bg-green-50 p-5 rounded-lg shadow-sm border border-green-200">
-                <h3 class="text-xl font-semibold text-green-800 mb-3">VOCALOID (.vsqx) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo VSQX. La IA generará notas HL simuladas para una canción compleja.
-                    <span class="font-bold text-red-600">El contenido binario real NO se procesa.</span>
-                </p>
-                <input type="file" id="vsqx-upload" accept=".vsqx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-100 file:text-green-700 hover:file:bg-green-200" />
-                <p id="vsqx-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-vsqx" class="mt-4 w-full px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200 shadow-md" disabled>
-                    Convertir VSQX a HL
-                </button>
-                <p id="vsqx-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- UST / USTX to HL -->
-            <div class="bg-yellow-50 p-5 rounded-lg shadow-sm border border-yellow-200">
-                <h3 class="text-xl font-semibold text-yellow-800 mb-3">UTAU (.ust/.ustx) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo UST/USTX. La IA intentará generar notas HL a partir de <span class="font-bold">todo el texto</span>.
-                    <span class="font-bold text-red-600">La interpretación es limitada.</span> (Max 50KB)
-                </p>
-                <input type="file" id="ust-upload" accept=".ust,.ustx" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-yellow-100 file:text-yellow-700 hover:file:bg-yellow-200" />
-                <p id="ust-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-ust" class="mt-4 w-full px-5 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition duration-200 shadow-md" disabled>
-                    Convertir UST/USTX a HL
-                </button>
-                <p id="ust-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- MusicXML to HL -->
-            <div class="bg-red-50 p-5 rounded-lg shadow-sm border border-red-200">
-                <h3 class="text-xl font-semibold text-red-800 mb-3">MusicXML (.musicxml) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo MusicXML. La IA generará notas HL simuladas a partir de <span class="font-bold">todo el texto</span>.
-                    <span class="font-bold text-red-600">La interpretación es limitada.</span> (Max 50KB)
-                </p>
-                <input type="file" id="musicxml-upload" accept=".xml,.musicxml" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-red-100 file:text-red-700 hover:file:bg-red-200" />
-                <p id="musicxml-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-musicxml" class="mt-4 w-full px-5 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition duration-200 shadow-md" disabled>
-                    Convertir MusicXML a HL
-                </button>
-                <p id="musicxml-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- SVP to HL -->
-            <div class="bg-purple-50 p-5 rounded-lg shadow-sm border border-purple-200">
-                <h3 class="text-xl font-semibold text-purple-800 mb-3">Synthesizer V (.svp) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo SVP. La IA generará notas HL simuladas para una canción compleja.
-                    <span class="font-bold text-red-600">El contenido binario real NO se procesa.</span>
-                </p>
-                <input type="file" id="svp-upload" accept=".svp" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200" />
-                <p id="svp-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-svp" class="mt-4 w-full px-5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition duration-200 shadow-md" disabled>
-                    Convertir SVP a HL
-                </button>
-                <p id="svp-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- S5P to HL -->
-            <div class="bg-pink-50 p-5 rounded-lg shadow-sm border border-pink-200">
-                <h3 class="text-xl font-semibold text-pink-800 mb-3">CeVIO (.s5p) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo S5P. La IA generará notas HL simuladas para una canción compleja.
-                    <span class="font-bold text-red-600">El contenido binario real NO se procesa.</span>
-                </p>
-                <input type="file" id="s5p-upload" accept=".s5p" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-pink-100 file:text-pink-700 hover:file:bg-pink-200" />
-                <p id="s5p-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-s5p" class="mt-4 w-full px-5 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700 transition duration-200 shadow-md" disabled>
-                    Convertir S5P a HL
-                </button>
-                <p id="s5p-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-            <!-- DV to HL -->
-            <div class="bg-indigo-50 p-5 rounded-lg shadow-sm border border-indigo-200">
-                <h3 class="text-xl font-semibold text-indigo-800 mb-3">DeepVocal (.dv) a HL</h3>
-                <p class="text-sm text-gray-700 mb-4">
-                    Sube un archivo DV. La IA generará notas HL simuladas para una canción compleja.
-                    <span class="font-bold text-red-600">El contenido binario real NO se procesa.</span>
-                </p>
-                <input type="file" id="dv-upload" accept=".dv" class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-100 file:text-indigo-700 hover:file:bg-indigo-200" />
-                <p id="dv-info" class="mt-2 text-xs text-gray-500">Ningún archivo seleccionado.</p>
-                <button id="convert-dv" class="mt-4 w-full px-5 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition duration-200 shadow-md" disabled>
-                    Convertir DV a HL
-                </button>
-                <p id="dv-status" class="mt-3 text-sm text-gray-600">Estado: Listo.</p>
-            </div>
-
-        </div>
-
-        <div class="mt-8 bg-gray-100 p-6 rounded-lg shadow-md border border-gray-200 text-center">
-            <h3 class="text-xl font-semibold text-gray-800 mb-4">Descargar Archivo HL Generado</h3>
-            <button id="download-hl-button" class="px-6 py-3 bg-teal-600 text-white rounded-lg text-lg font-bold hover:bg-teal-700 transition duration-300 shadow-lg transform hover:scale-105" disabled>
-                Descargar Archivo HL
+        <!-- Sección de Carga de Archivos de Música -->
+        <section class="bg-gray-50 p-5 rounded-lg shadow-inner border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i data-lucide="file-audio" class="text-teal-600" size="20"></i> Cargar Archivos de Música
+            </h2>
+            <!-- Input de archivo oculto que se activará por el botón -->
+            <input type="file" id="file-input" multiple accept="audio/*">
+            <button id="select-music-files-button"
+                class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md flex items-center justify-center gap-2">
+                <i data-lucide="upload" size="20"></i> Seleccionar Archivos de Audio (.wav, .mp3, etc.)
             </button>
-            <p id="download-status" class="mt-3 text-sm text-gray-600">No hay archivo HL listo para descargar.</p>
-        </div>
-    </main>
+            <div id="selected-files-list" class="mt-4 space-y-2 text-sm text-gray-700">
+                <p>Ningún archivo seleccionado.</p>
+            </div>
+        </section>
 
-    <script type="module">
-        // Utility functions for loading and modals (reused from previous turns)
-        function showLoading() {
-            document.getElementById('loading-overlay').classList.remove('hidden');
+        <!-- Sección de Detalles del Proyecto HL -->
+        <section class="bg-white p-5 rounded-lg shadow-md border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i data-lucide="folder-output" class="text-purple-600" size="20"></i> Detalles del Proyecto HL
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <label for="project-name-input" class="block text-sm font-medium text-gray-700 mb-1">Nombre del Proyecto HL:</label>
+                    <input type="text" id="project-name-input" placeholder="Mi Nueva Canción"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500" />
+                </div>
+                <div>
+                    <label for="project-author-input" class="block text-sm font-medium text-gray-700 mb-1">Autor del Proyecto HL:</label>
+                    <input type="text" id="project-author-input" placeholder="Tu Nombre / Artista"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500" />
+                </div>
+                <div>
+                    <label for="project-description-input" class="block text-sm font-medium text-gray-700 mb-1">Descripción del Proyecto HL:</label>
+                    <textarea id="project-description-input" rows="3" placeholder="Una breve descripción de tu proyecto..."
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"></textarea>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Conversión -->
+        <section class="bg-gray-50 p-5 rounded-lg shadow-inner border border-gray-200">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <i data-lucide="check-square" class="text-green-600" size="20"></i> Iniciar Conversión
+            </h2>
+            <button id="convert-to-hl-button" disabled
+                class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-md flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <i data-lucide="activity" size="20"></i> Convertir a Proyecto HL
+            </button>
+            <p id="conversion-status-message" class="mt-4 text-gray-700 text-center">Listo para convertir.</p>
+        </section>
+    </div>
+
+    <!-- Temporary Message Box -->
+    <div id="temp-message-box" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 hidden transition-opacity duration-300 opacity-0">
+        <p id="temp-message-content"></p>
+    </div>
+
+    <script>
+        // Inicializar Lucide Icons
+        lucide.createIcons();
+
+        // --- Variables Globales ---
+        // Almacena solo los nombres de los archivos, ya que no podemos acceder a las rutas completas en el navegador
+        let selectedMusicFileNames = []; 
+
+        // --- Custom UI Functions (replacing alert/confirm) ---
+        function showTemporaryMessage(message, duration = 3000) {
+            const msgBox = document.getElementById('temp-message-box');
+            const msgContent = document.getElementById('temp-message-content');
+
+            msgContent.textContent = message;
+            msgBox.classList.remove('hidden', 'opacity-0');
+            msgBox.classList.add('opacity-100');
+
+            clearTimeout(msgBox.timer); // Clear any existing timer
+            msgBox.timer = setTimeout(() => {
+                msgBox.classList.remove('opacity-100');
+                msgBox.classList.add('opacity-0');
+                setTimeout(() => {
+                    msgBox.classList.add('hidden');
+                }, 300); // Wait for transition to finish
+            }, duration);
         }
 
-        function hideLoading() {
-            document.getElementById('loading-overlay').classList.add('hidden');
+        function updateConversionStatus(message) {
+            document.getElementById('conversion-status-message').textContent = message;
         }
 
-        function showModal(title, message, showConfirmButton = false, onConfirmCallback = null) {
-            document.getElementById('modal-title').innerHTML = title;
-            document.getElementById('modal-message').innerHTML = message;
-            const confirmBtn = document.getElementById('modal-confirm-button');
-            confirmBtn.onclick = () => {
-                if (onConfirmCallback) onConfirmCallback();
-                hideModal();
-            };
-            if (showConfirmButton) {
-                confirmBtn.classList.remove('hidden');
-            } else {
-                confirmBtn.classList.add('hidden');
-            }
-            document.getElementById('custom-modal').classList.remove('hidden');
+        function updateConvertButtonState() {
+            const convertButton = document.getElementById('convert-to-hl-button');
+            convertButton.disabled = selectedMusicFileNames.length === 0;
         }
 
-        function hideModal() {
-            document.getElementById('custom-modal').classList.add('hidden');
-        }
-        document.getElementById('modal-close-button').addEventListener('click', hideModal);
+        // --- Funciones de Lógica ---
 
-        // --- Global State ---
-        let generatedHLContent = null; // Stores the JSON string of the generated HL file
-        let currentConvertedFileName = 'my_converted_song.hl'; // Default filename for download
+        function handleFileSelection(event) {
+            const files = event.target.files;
+            const selectedFilesList = document.getElementById('selected-files-list');
+            selectedFilesList.innerHTML = ''; // Limpiar lista anterior
+            selectedMusicFileNames = [];
 
-        // --- DOM Elements ---
-        const downloadHLButton = document.getElementById('download-hl-button');
-        const downloadStatus = document.getElementById('download-status');
-
-        const fileInputs = {
-            'wav': { input: document.getElementById('wav-upload'), button: document.getElementById('convert-wav'), info: document.getElementById('wav-info'), status: document.getElementById('wav-status'), accept: 'audio/wav' },
-            'vsqx': { input: document.getElementById('vsqx-upload'), button: document.getElementById('convert-vsqx'), info: document.getElementById('vsqx-info'), status: document.getElementById('vsqx-status'), accept: '.vsqx' },
-            'ust': { input: document.getElementById('ust-upload'), button: document.getElementById('convert-ust'), info: document.getElementById('ust-info'), status: document.getElementById('ust-status'), accept: '.ust,.ustx' },
-            'musicxml': { input: document.getElementById('musicxml-upload'), button: document.getElementById('convert-musicxml'), info: document.getElementById('musicxml-info'), status: document.getElementById('musicxml-status'), accept: '.xml,.musicxml' },
-            'svp': { input: document.getElementById('svp-upload'), button: document.getElementById('convert-svp'), info: document.getElementById('svp-info'), status: document.getElementById('svp-status'), accept: '.svp' },
-            's5p': { input: document.getElementById('s5p-upload'), button: document.getElementById('convert-s5p'), info: document.getElementById('s5p-info'), status: document.getElementById('s5p-status'), accept: '.s5p' },
-            'dv': { input: document.getElementById('dv-upload'), button: document.getElementById('convert-dv'), info: document.getElementById('dv-info'), status: document.getElementById('dv-status'), accept: '.dv' },
-        };
-
-        const MAX_TEXT_SIZE_WARNING_BYTES = 10 * 1024; // 10KB for text files (warning)
-        const MAX_TEXT_SIZE_ERROR_BYTES = 50 * 1024; // 50KB for text files (error)
-
-
-        // --- Helper Functions ---
-
-        /**
-         * Reads a file as text.
-         * @param {File} file The file to read.
-         * @returns {Promise<string>} A promise that resolves with the file content as text.
-         */
-        function readFileAsText(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsText(file);
-            });
-        }
-
-        /**
-         * Reads a file as Base64 data URL.
-         * @param {File} file The file to read.
-         * @returns {Promise<string>} A promise that resolves with the file content as a Base64 data URL.
-         */
-        function readFileAsBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = (e) => reject(e);
-                reader.readAsDataURL(file);
-            });
-        }
-
-        /**
-         * Calls the Gemini API to generate HL content.
-         * @param {string} prompt The prompt for the LLM.
-         * @param {string} [mimeType] MIME type for inline data (e.g., audio).
-         * @param {string} [base64Data] Base64 data for inline data.
-         * @returns {Promise<Object[]>} A promise that resolves with the generated PianoNote array.
-         */
-        async function generateHLWithLLM(prompt, mimeType = null, base64Data = null) {
-            const chatHistory = [{ role: "user", parts: [{ text: prompt }] }];
-
-            if (mimeType && base64Data) {
-                chatHistory[0].parts.push({ inlineData: { mimeType: mimeType, data: base64Data } });
-            }
-
-            const payload = {
-                contents: chatHistory,
-                generationConfig: {
-                    responseMimeType: "application/json",
-                    responseSchema: {
-                        type: "ARRAY",
-                        items: {
-                            type: "OBJECT",
-                            properties: {
-                                "pitch": { "type": "NUMBER" },
-                                "start": { "type": "NUMBER" },
-                                "length": { "type": "NUMBER" },
-                                "lyric": { "type": "STRING" }
-                            },
-                            "propertyOrdering": ["pitch", "start", "length", "lyric"]
-                        }
-                    }
+            if (files.length > 0) {
+                for (const file of files) {
+                    selectedMusicFileNames.push(file.name);
+                    const p = document.createElement('p');
+                    p.textContent = `✓ ${file.name}`;
+                    selectedFilesList.appendChild(p);
                 }
-            };
-
-            const apiKey = ""; // Canvas will provide this at runtime
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                const jsonText = result.candidates[0].content.parts[0].text;
-                try {
-                    return JSON.parse(jsonText);
-                } catch (e) {
-                    console.error("Error parsing LLM JSON response:", e, jsonText);
-                    throw new Error("La IA no devolvió un JSON válido. Inténtalo de nuevo.");
-                }
+                updateConversionStatus(`Seleccionados ${selectedMusicFileNames.length} archivo(s) de música.`);
             } else {
-                console.error("LLM did not return candidates or content:", result);
-                throw new Error("La IA no pudo generar el contenido HL. Inténtalo de nuevo.");
+                selectedFilesList.innerHTML = '<p>Ningún archivo seleccionado.</p>';
+                updateConversionStatus("Selección de archivos cancelada.");
             }
+            updateConvertButtonState();
         }
 
-        /**
-         * Handles the conversion process for a given file type.
-         * @param {File} file The file to convert.
-         * @param {string} type The type of file (e.g., 'wav', 'ust').
-         * @param {HTMLElement} statusElement The element to update with status messages.
-         */
-        async function handleConversion(file, type, statusElement) {
-            statusElement.textContent = `Estado: Procesando ${file.name}...`;
-            showLoading();
-            generatedHLContent = null;
-            downloadHLButton.disabled = true;
-            downloadStatus.textContent = "No hay archivo HL listo para descargar.";
+        async function handleConvertToHl() {
+            if (selectedMusicFileNames.length === 0) {
+                showTemporaryMessage("Por favor, selecciona al menos un archivo de música primero.");
+                return;
+            }
 
-            // Set the filename for download immediately
-            const fileNameWithoutExtension = file.name.split('.').slice(0, -1).join('.');
-            currentConvertedFileName = `${fileNameWithoutExtension}.hl`;
-            downloadHLButton.textContent = `Descargar ${currentConvertedFileName}`;
+            const projectName = document.getElementById('project-name-input').value.trim();
+            const projectAuthor = document.getElementById('project-author-input').value.trim();
+            const projectDescription = document.getElementById('project-description-input').value.trim();
 
+            if (!projectName || !projectAuthor) {
+                showTemporaryMessage("El nombre y autor del proyecto son obligatorios.");
+                return;
+            }
+
+            updateConversionStatus("Iniciando conversión a proyecto HL (simulado)...");
+            showTemporaryMessage("Convirtiendo (simulado)...");
+
+            // Simulación de notas generadas a partir de archivos de música
+            const generatedNotes = [];
+            let currentTime = 0;
+            const defaultLength = 200; // Duración predeterminada de la nota simulada en ms
+            const lyricsCycle = ["la", "le", "li", "lo", "lu", "do", "re", "mi", "fa", "sol"];
+            let lyricIndex = 0;
+
+            selectedMusicFileNames.forEach((fileName, index) => {
+                // Para cada archivo, añadimos algunas notas dummy
+                for (let i = 0; i < 5; i++) { // 5 notas por archivo
+                    generatedNotes.push({
+                        Pitch: 60 + (i * 2) + (index * 3), // Variar tono ligeramente por archivo y por nota
+                        Start: currentTime,
+                        Length: defaultLength,
+                        Lyric: lyricsCycle[lyricIndex % lyricsCycle.length]
+                    });
+                    currentTime += defaultLength + 50; // Añadir un pequeño espacio entre notas
+                    lyricIndex++;
+                }
+            });
+
+            const hlProjectContent = {
+                projectName: projectName,
+                author: projectAuthor,
+                description: projectDescription,
+                sourceFiles: selectedMusicFileNames, // Ahora solo guardamos los nombres de los archivos
+                notes: generatedNotes,
+                timestamp: new Date().toISOString()
+            };
+
+            const hlJsonString = JSON.stringify(hlProjectContent, null, 2);
 
             try {
-                let prompt = "";
-                let fileContent = "";
-                let mimeType = null;
-                let base64Data = null;
+                // Simula el guardado creando un Blob y un enlace de descarga
+                const blob = new Blob([hlJsonString], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${projectName.replace(/\s+/g, '_')}.hl`; // Nombre del archivo sugerido
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url); // Limpiar URL del objeto
 
-                if (type === 'wav') {
-                    // No size limit for WAV files in this app, but API might have limits (e.g., 4MB for inlineData)
-                    base64Data = (await readFileAsBase64(file)).split(',')[1];
-                    mimeType = file.type;
-                    
-                    // First, transcribe the audio
-                    const transcriptionPrompt = "Transcribe este audio a texto. Solo el texto transcrito, sin comentarios ni formato adicional. Si el audio es musical o no contiene voz clara, indica 'audio instrumental' o 'sin voz clara'.";
-                    const transcriptionPayload = {
-                        contents: [
-                            { role: "user", parts: [{ text: transcriptionPrompt }, { inlineData: { mimeType: mimeType, data: base64Data } }] }
-                        ]
-                    };
-                    const apiKey = ""; // Canvas will provide this at runtime
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                    const transcriptionResponse = await fetch(apiUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(transcriptionPayload)
-                    });
-                    const transcriptionResult = await transcriptionResponse.json();
-
-                    let transcribedText = "";
-                    if (transcriptionResult.candidates && transcriptionResult.candidates.length > 0 &&
-                        transcriptionResult.candidates[0].content && transcriptionResult.candidates[0].content.parts &&
-                        transcriptionResult.candidates[0].content.parts.length > 0) {
-                        transcribedText = transcriptionResult.candidates[0].content.parts[0].text;
-                        if (transcribedText.toLowerCase().includes('audio instrumental') || transcribedText.toLowerCase().includes('sin voz clara')) {
-                            prompt = `Simula la conversión de un archivo WAV instrumental llamado "${file.name}". Genera un JSON array de 'PianoNote' objetos para una melodía simple. Cada objeto debe tener 'pitch' (MIDI number), 'start' (time in ticks), 'length' (duration in ticks), y 'lyric' (una vocal o sílaba genérica como 'la', 'oh'). Crea una secuencia musical corta y coherente.`;
-                        } else {
-                            prompt = `Convierte el siguiente texto, transcrito de un archivo WAV llamado "${file.name}", en un JSON array de 'PianoNote' objetos. Cada objeto debe tener 'pitch' (MIDI number, e.g., 60 for C5), 'start' (time in ticks, starting from 0), 'length' (duration in ticks), y 'lyric' (una sílaba o palabra del texto). Intenta asignar tonos y duraciones plausibles para una melodía vocal simple. Texto transcrito: "${transcribedText}"`;
-                        }
-                    } else {
-                        throw new Error("No se pudo transcribir el audio para la conversión a HL.");
-                    }
-
-                } else if (['ust', 'musicxml'].includes(type)) {
-                    // Read full text content for these types
-                    if (file.size > MAX_TEXT_SIZE_ERROR_BYTES) {
-                        throw new Error(`El archivo de texto es demasiado grande (${(file.size / 1024).toFixed(2)} KB). Límite: ${MAX_TEXT_SIZE_ERROR_BYTES / 1024} KB.`);
-                    }
-                    fileContent = await readFileAsText(file);
-                    if (file.size > MAX_TEXT_SIZE_WARNING_BYTES) {
-                        showModal("Advertencia de Tamaño", `El archivo de texto es grande (${(file.size / 1024).toFixed(2)} KB). Esto podría afectar la calidad de la conversión de la IA o exceder los límites del modelo.`);
-                    }
-                    
-                    prompt = `Dado el contenido completo del archivo de secuencia musical (${type.toUpperCase()}) llamado "${file.name}", genera un JSON array de 'PianoNote' objetos. Cada objeto debe tener 'pitch' (MIDI number, e.g., 60 for C5), 'start' (time in ticks, starting from 0), 'length' (duration in ticks), y 'lyric' (una sílaba o palabra). Interpreta el contenido lo más fielmente posible para crear una secuencia musical completa y coherente. Contenido: \`\`\`${fileContent}\`\`\``;
-                } else {
-                    // For binary/complex files, just use filename and type, prompt for complex song
-                    prompt = `Simula la conversión de un *proyecto musical complejo* de tipo ${type.toUpperCase()} llamado "${file.name}". Genera un JSON array de 'PianoNote' objetos para una pieza musical elaborada y variada. Cada objeto debe tener 'pitch' (MIDI number), 'start' (time in ticks), 'length' (duration in ticks), y 'lyric' (diversas sílabas o palabras, reflejando una canción completa). Crea una secuencia musical más larga e intrincada, imaginando el contenido típico para este tipo de archivo. Recuerda, esta es una simulación ya que el contenido binario real del archivo no puede ser procesado directamente.`;
-                }
-
-                const hlNotes = await generateHLWithLLM(prompt, mimeType, base64Data);
+                updateConversionStatus(`¡Conversión completada! Archivo '${a.download}' listo para descargar.`);
+                showTemporaryMessage(`¡Proyecto HL guardado!`);
                 
-                generatedHLContent = JSON.stringify({ notes: hlNotes }, null, 4);
-                downloadHLButton.disabled = false;
-                downloadStatus.textContent = `Archivo HL generado para ${file.name}. ¡Listo para descargar como ${currentConvertedFileName}!`;
-                statusElement.textContent = `Estado: Conversión de ${file.name} completada.`;
-
+                // Opcional: Limpiar inputs y archivos seleccionados
+                document.getElementById('project-name-input').value = '';
+                document.getElementById('project-author-input').value = '';
+                document.getElementById('project-description-input').value = '';
+                selectedMusicFileNames = [];
+                document.getElementById('selected-files-list').innerHTML = '<p>Ningún archivo seleccionado.</p>';
             } catch (error) {
-                console.error(`Error converting ${type} file:`, error);
-                statusElement.textContent = `Estado: Error al convertir ${file.name}.`;
-                showModal("Error de Conversión", `No se pudo convertir ${file.name} a HL. ${error.message || 'Inténtalo de nuevo.'}`);
-                downloadHLButton.textContent = "Descargar Archivo HL"; // Reset button text on error
-                downloadHLButton.disabled = true;
-                downloadStatus.textContent = "No hay archivo HL listo para descargar."; // Reset status on error
+                updateConversionStatus(`Error durante la conversión: ${error.message}`);
+                showTemporaryMessage(`Error de conversión: ${error.message}`);
+                console.error("Error en handleConvertToHl:", error);
             } finally {
-                hideLoading();
+                updateConvertButtonState();
             }
         }
 
-        // --- Event Listeners ---
+
+        // --- Inicialización de Event Listeners ---
         document.addEventListener('DOMContentLoaded', () => {
-            // Setup file input change listeners
-            for (const key in fileInputs) {
-                const { input, button, info, status } = fileInputs[key];
-                input.addEventListener('change', (e) => {
-                    const file = e.target.files[0];
-                    if (file) {
-                        info.textContent = `Archivo seleccionado: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
-                        info.classList.remove('text-red-600');
-                        button.disabled = false;
-
-                        // Specific size checks for different file types
-                        if (['ust', 'musicxml'].includes(key)) {
-                            if (file.size > MAX_TEXT_SIZE_ERROR_BYTES) {
-                                info.textContent = `Error: El archivo de texto es demasiado grande (${(file.size / 1024).toFixed(2)} KB). Límite: ${MAX_TEXT_SIZE_ERROR_BYTES / 1024} KB.`;
-                                info.classList.add('text-red-600');
-                                button.disabled = true;
-                            } else if (file.size > MAX_TEXT_SIZE_WARNING_BYTES) {
-                                info.textContent = `Advertencia: Archivo grande (${(file.size / 1024).toFixed(2)} KB). Podría afectar la IA.`;
-                                info.classList.add('text-orange-500'); // Use orange for warning
-                            }
-                        }
-                        // No size check for WAV files now
-                    } else {
-                        info.textContent = `Ningún archivo seleccionado.`;
-                        info.classList.remove('text-red-600', 'text-orange-500'); // Clear any previous warnings/errors
-                        button.disabled = true;
-                    }
-                    status.textContent = 'Estado: Listo.';
-                    downloadHLButton.textContent = "Descargar Archivo HL"; // Reset button text when new file is selected
-                    downloadHLButton.disabled = true;
-                    downloadStatus.textContent = "No hay archivo HL listo para descargar.";
-                });
-
-                // Setup convert button click listeners
-                button.addEventListener('click', () => {
-                    const file = input.files[0];
-                    if (file) {
-                        handleConversion(file, key, status);
-                    } else {
-                        showModal("Error", "Por favor, selecciona un archivo primero.");
-                    }
-                });
-            }
-
-            // Download button listener
-            downloadHLButton.addEventListener('click', () => {
-                if (generatedHLContent && currentConvertedFileName) {
-                    const blob = new Blob([generatedHLContent], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = currentConvertedFileName; // Use the stored filename
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
-                    downloadStatus.textContent = `Archivo HL ${currentConvertedFileName} descargado.`;
-                } else {
-                    showModal("Descarga", "No hay archivo HL generado para descargar.");
-                }
+            lucide.createIcons();
+            
+            // Asocia el clic del botón personalizado al input de archivo oculto
+            document.getElementById('select-music-files-button').addEventListener('click', () => {
+                document.getElementById('file-input').click();
             });
+
+            // Escucha el evento 'change' del input de archivo real
+            document.getElementById('file-input').addEventListener('change', handleFileSelection);
+
+            document.getElementById('convert-to-hl-button').addEventListener('click', handleConvertToHl);
+            updateConvertButtonState(); // Estado inicial del botón
         });
     </script>
 </body>
